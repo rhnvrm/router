@@ -13,6 +13,8 @@ type Router struct {
 	customMethodsIndex map[string]int
 	registeredPaths    map[string][]string
 
+	RenderTrailingSlash bool
+
 	// If enabled, adds the matched route path onto the ctx.UserValue context
 	// before invoking the handler.
 	// The matched route path is only added to handlers of routes that were

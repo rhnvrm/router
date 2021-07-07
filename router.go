@@ -30,7 +30,8 @@ func New() *Router {
 		trees:                  make([]*radix.Tree, 10),
 		customMethodsIndex:     make(map[string]int),
 		registeredPaths:        make(map[string][]string),
-		RedirectTrailingSlash:  true,
+		RenderTrailingSlash:    true,
+		RedirectTrailingSlash:  false,
 		RedirectFixedPath:      true,
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
@@ -414,6 +415,24 @@ func (r *Router) Handler(ctx *fasthttp.RequestCtx) {
 				handler(ctx)
 				return
 			} else if method != fasthttp.MethodConnect && path != "/" {
+				if tsr && r.RenderTrailingSlash {
+					uri := bytebufferpool.Get()
+
+					if len(path) > 1 && path[len(path)-1] == '/' {
+						uri.SetString(path[:len(path)-1])
+					} else {
+						uri.SetString(path)
+						uri.WriteString("/")
+					}
+
+					handler, _ := tree.Get(uri.String(), ctx)
+
+					bytebufferpool.Put(uri)
+					if handler != nil {
+						handler(ctx)
+						return
+					}
+				}
 				if ok := r.tryRedirect(ctx, tree, tsr, method, path); ok {
 					return
 				}
